@@ -20,6 +20,7 @@ from graphix.sim.density_matrix import DensityMatrix
 from graphix.sim.statevec import Statevec
 from graphix.simulator import DefaultMeasureMethod
 from graphix.states import BasicStates
+from graphix.transpiler import transpile_swaps
 from numpy.random import PCG64, Generator
 
 from graphix_stim_backend import (
@@ -89,10 +90,12 @@ def test_pauli_measurement_random_circuit(fx_bg: PCG64, jumps: int) -> None:
     nqubits = 4
     depth = 4
     circuit = rand_circuit(nqubits, depth, rng)
+    circuit = transpile_swaps(circuit).circuit
     pattern = circuit.transpile().pattern
     pattern.standardize()
     pattern.shift_signals()
-    pattern2 = presimulate_pauli(pattern, leave_input=False)
+    pattern2 = pattern.infer_pauli_measurements()
+    pattern2 = presimulate_pauli(pattern2, leave_input=False)
     pattern.minimize_space()
     # pattern2.minimize_space()  # Break runnability!  # noqa: ERA001
     # Since the patterns are deterministic, we do not need to select a particular branch
@@ -108,9 +111,11 @@ def test_branch_selection(fx_bg: PCG64, jumps: int) -> None:
     nqubits = 4
     depth = 4
     circuit = rand_circuit(nqubits, depth, rng)
+    circuit = transpile_swaps(circuit).circuit
     pattern = circuit.transpile().pattern
     pattern.standardize()
     pattern.shift_signals()
+    pattern = pattern.infer_pauli_measurements()
     pattern_a = presimulate_pauli(pattern, leave_input=False)
     pattern_b = presimulate_pauli(pattern, leave_input=False, branch=pattern_a.results)
     assert list(pattern_a) == list(pattern_b)
@@ -123,9 +128,11 @@ def test_simulate_pauli_depolarising_noise(fx_bg: PCG64, jumps: int) -> None:
     nqubits = 4
     depth = 4
     circuit = rand_circuit(nqubits, depth, rng)
+    circuit = transpile_swaps(circuit).circuit
     pattern = circuit.transpile().pattern
     pattern.standardize()
     pattern.shift_signals()
+    pattern = pattern.infer_pauli_measurements()
     pattern = StandardizedPattern.from_pattern(pattern).perform_pauli_pushing().to_pattern()
     pauli_pattern, _non_pauli_pattern = cut_pattern(pattern)
     noise_model = DepolarisingNoiseModel()
