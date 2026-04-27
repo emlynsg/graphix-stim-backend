@@ -69,6 +69,7 @@ def test_simple() -> None:
     pattern.add(command.E((1, 2)))
     pattern.add(command.M(0, Measurement.Y))
     pattern.add(command.M(1, Measurement.XY(0.4), s_domain={0}))
+    pattern = pattern.infer_pauli_measurements()
     pattern2 = presimulate_pauli(pattern, leave_input=False)
     pattern.minimize_space()
     pattern2.minimize_space()
@@ -112,10 +113,9 @@ def test_branch_selection(fx_bg: PCG64, jumps: int) -> None:
     depth = 4
     circuit = rand_circuit(nqubits, depth, rng)
     circuit = transpile_swaps(circuit).circuit
-    pattern = circuit.transpile().pattern
+    pattern = circuit.transpile().pattern.infer_pauli_measurements()
     pattern.standardize()
     pattern.shift_signals()
-    pattern = pattern.infer_pauli_measurements()
     pattern_a = presimulate_pauli(pattern, leave_input=False)
     pattern_b = presimulate_pauli(pattern, leave_input=False, branch=pattern_a.results)
     assert list(pattern_a) == list(pattern_b)
@@ -129,10 +129,9 @@ def test_simulate_pauli_depolarising_noise(fx_bg: PCG64, jumps: int) -> None:
     depth = 4
     circuit = rand_circuit(nqubits, depth, rng)
     circuit = transpile_swaps(circuit).circuit
-    pattern = circuit.transpile().pattern
+    pattern = circuit.transpile().pattern.infer_pauli_measurements()
     pattern.standardize()
     pattern.shift_signals()
-    pattern = pattern.infer_pauli_measurements()
     pattern = StandardizedPattern.from_pattern(pattern).perform_pauli_pushing().to_pattern()
     pauli_pattern, _non_pauli_pattern = cut_pattern(pattern)
     noise_model = DepolarisingNoiseModel()
@@ -144,7 +143,7 @@ def hpat() -> Pattern:
     """Return the Hadamard pattern."""
     circ = Circuit(1)
     circ.h(0)
-    return circ.transpile().pattern
+    return circ.transpile().pattern.infer_pauli_measurements()
 
 
 def simulate_with_noise_model_to_density_matrix(pattern: Pattern, noise_model: NoiseModel) -> Matrix:
@@ -234,7 +233,7 @@ def test_pattern_to_stim_circuit_hadamard() -> None:
     circuit = Circuit(2)
     circuit.h(0)
     circuit.h(1)
-    pattern = circuit.transpile().pattern
+    pattern = circuit.transpile().pattern.infer_pauli_measurements()
     node0 = pattern.output_nodes[0]
     node1 = pattern.output_nodes[1]
     pattern.add(command.M(node0))
