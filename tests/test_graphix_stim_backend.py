@@ -95,8 +95,8 @@ def test_pauli_measurement_random_circuit(fx_bg: PCG64, jumps: int) -> None:
     pattern = circuit.transpile().pattern
     pattern.standardize()
     pattern.shift_signals()
-    pattern2 = pattern.infer_pauli_measurements()
-    pattern2 = presimulate_pauli(pattern2, leave_input=False)
+    pattern = pattern.infer_pauli_measurements()
+    pattern2 = presimulate_pauli(pattern, leave_input=False)
     pattern.minimize_space()
     # pattern2.minimize_space()  # Break runnability!  # noqa: ERA001
     # Since the patterns are deterministic, we do not need to select a particular branch
