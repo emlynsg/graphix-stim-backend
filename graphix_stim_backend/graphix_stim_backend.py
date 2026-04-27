@@ -450,4 +450,5 @@ def presimulate_pauli(
     result_pattern = backend.to_pattern(input_nodes, non_pauli_pattern.input_nodes)
     result_pattern.results = measure_method.results
     result_pattern.extend(non_pauli_pattern)
+    result_pattern.reorder_output_nodes(pattern.output_nodes)
     return result_pattern
